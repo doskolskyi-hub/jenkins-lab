@@ -64,29 +64,29 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 sh '''
-                    ssh -o StrictHostKeyChecking=no ubuntu@10.20.1.172 << 'EOF'
+                    ssh -o StrictHostKeyChecking=no ubuntu@10.20.1.172 '
+                        set -e
 
-                    aws ecr get-login-password --region eu-central-1 | \
-                    docker login --username AWS --password-stdin \
-                    666398469283.dkr.ecr.eu-central-1.amazonaws.com
+                        aws ecr get-login-password --region eu-central-1 | \
+                        docker login --username AWS --password-stdin \
+                        666398469283.dkr.ecr.eu-central-1.amazonaws.com
 
-                    docker pull \
-                    666398469283.dkr.ecr.eu-central-1.amazonaws.com/jenkins-lab:latest
+                        docker pull \
+                        666398469283.dkr.ecr.eu-central-1.amazonaws.com/jenkins-lab:latest
 
-                    docker rm -f jenkins-lab-app 2>/dev/null || true
+                        docker rm -f jenkins-lab-app 2>/dev/null || true
 
-                    docker run -d \
-                      --name jenkins-lab-app \
-                      --restart unless-stopped \
-                      -p 80:80 \
-                      -e WORDPRESS_DB_HOST="doskolskyi-wordpress-rds.c3kyeieu6kkc.eu-central-1.rds.amazonaws.com:3306" \
-                      -e WORDPRESS_DB_NAME="wordpress" \
-                      -e WORDPRESS_DB_USER="db_user" \
-                      -e AWS_REGION="eu-central-1" \
-                      -e SSM_DB_PASSWORD_PARAMETER="/wordpress/db/password" \
-                      666398469283.dkr.ecr.eu-central-1.amazonaws.com/jenkins-lab:latest
-
-                    EOF
+                        docker run -d \
+                          --name jenkins-lab-app \
+                          --restart unless-stopped \
+                          -p 80:80 \
+                          -e WORDPRESS_DB_HOST="doskolskyi-wordpress-rds.c3kyeieu6kkc.eu-central-1.rds.amazonaws.com:3306" \
+                          -e WORDPRESS_DB_NAME="wordpress" \
+                          -e WORDPRESS_DB_USER="db_user" \
+                          -e AWS_REGION="eu-central-1" \
+                          -e SSM_DB_PASSWORD_PARAMETER="/wordpress/db/password" \
+                          666398469283.dkr.ecr.eu-central-1.amazonaws.com/jenkins-lab:latest
+                    '
                 '''
             }
         }
