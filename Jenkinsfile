@@ -7,6 +7,9 @@ pipeline {
         ECR_REPOSITORY = 'jenkins-lab'
         ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         IMAGE_URI = "${ECR_REGISTRY}/${ECR_REPOSITORY}"
+
+        ECS_CLUSTER = 'jenkins-cluster'
+        ECS_SERVICE = 'jenkins-task-service-xts2x1jm'
     }
 
     stages {
@@ -90,11 +93,38 @@ pipeline {
                 '''
             }
         }
+
+        stage('Deploy to ECS') {
+            when {
+                branch 'main'
+            }
+
+            steps {
+                sh '''
+                    echo "Starting ECS deployment..."
+
+                    aws ecs update-service \
+                      --cluster ${ECS_CLUSTER} \
+                      --service ${ECS_SERVICE} \
+                      --force-new-deployment \
+                      --region ${AWS_REGION}
+
+                    echo "Waiting for ECS service to become stable..."
+
+                    aws ecs wait services-stable \
+                      --cluster ${ECS_CLUSTER} \
+                      --services ${ECS_SERVICE} \
+                      --region ${AWS_REGION}
+
+                    echo "ECS deployment completed successfully."
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo 'Docker image successfully built, pushed to ECR and deployed to EC2!'
+            echo 'Docker image successfully built, pushed to ECR, deployed to EC2 and ECS!'
         }
 
         failure {
